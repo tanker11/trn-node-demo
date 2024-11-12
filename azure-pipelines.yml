@@ -1,0 +1,84 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+  - main
+  - demo
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: ci_code_lint
+    displayName: CI - Kód formátum ellenőrzés
+    condition: eq(variables['Build.Reason'], 'PullRequest')
+    jobs:
+      - job: basic_check
+        displayName: Kód ellenőrzés
+        steps:
+          - task: NodeTool@0
+            displayName: "NodeJs 20 telepítés"
+            inputs:
+              versionSpec: "20.x"
+          - task: Bash@3
+            name: install_dependencies
+            displayName: Függőségek teleptése
+            inputs:
+              targetType: "inline"
+              script: |
+                npm upgrade
+                npm install
+          - task: Bash@3
+            name: node_check
+            displayName: "NodeJS - Kód ellenőrzés"
+            inputs:
+              targetType: "inline"
+              script: |
+                echo "##[command]A kód rendben?"
+                npm run lint:js
+          - task: Bash@3
+            name: ejs_check
+            displayName: "EJS - Kód ellenőrzés"
+            inputs:
+              targetType: "inline"
+              script: |
+                echo "##[command]A kód rendben?"
+                npm run lint:ejs
+          - task: Bash@3
+            name: html_check
+            displayName: "HTML - Kód ellenőrzés"
+            inputs:
+              targetType: "inline"
+              script: |
+                echo "##[command]A kód rendben?"
+                npm run lint:html
+  - stage: ci_code_check
+    displayName: CI - Funkció ellenőrzés
+    condition: eq(variables['Build.Reason'], 'PullRequest')
+    dependsOn: ci_code_lint
+    jobs:
+      - job: basic_check
+        displayName: Funkció ellenőrzés
+        steps:
+          - task: NodeTool@0
+            displayName: "NodeJs 20 telepítés"
+            inputs:
+              versionSpec: "20.x"
+          - task: Bash@3
+            name: install_dependencies
+            displayName: Függőségek teleptése
+            inputs:
+              targetType: "inline"
+              script: |
+                npm upgrade
+                npm install
+          - task: Bash@3
+            name: unit_tests
+            displayName: "Funkcionális tesztek futtatása"
+            inputs:
+              targetType: "inline"
+              script: |
+                echo "##[command]Funkciók rendben?"
+                npm run test
